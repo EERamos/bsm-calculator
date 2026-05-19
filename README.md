@@ -5,7 +5,7 @@ An interactive, browser-based calculator for European options pricing under the 
 ## Live Demo
 
 ```
-(https://eeramos.github.io/bsm-calculator/)/
+https://eeramos.github.io/bsm-calculator/
 ```
 
 ## What It Does

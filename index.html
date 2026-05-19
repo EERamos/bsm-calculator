@@ -66,6 +66,81 @@
     .grid.controls, .grid.charts-2, .grid.charts-3 { grid-template-columns: 1fr; }
   }
 
+  /* Mobile: phones at portrait orientation */
+  @media (max-width: 768px) {
+    header { padding: 20px 16px 10px; }
+    header h1 { font-size: 20px; line-height: 1.2; }
+    header p { font-size: 12px; }
+    header .badge { font-size: 9px; padding: 2px 8px; margin-left: 6px; vertical-align: 4px; }
+    header .author { font-size: 11px; margin-top: 6px; }
+
+    .formula {
+      padding: 8px 16px 14px;
+      font-size: 11px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+
+    main { padding: 16px 12px 40px; }
+
+    .grid { gap: 14px; }
+    .card { padding: 14px 14px; border-radius: 10px; }
+    .card h3 { font-size: 12px; margin-bottom: 10px; }
+
+    .grid.outputs { grid-template-columns: 1fr; gap: 8px; }
+    .output-card { padding: 12px 14px; }
+    .output-card .num { font-size: 19px; }
+    .output-card .sub { font-size: 10px; }
+
+    .greeks-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .greek { padding: 7px 9px; }
+    .greek .name { font-size: 9px; }
+    .greek .c, .greek .p { font-size: 12px; }
+
+    .slider-row {
+      grid-template-columns: 48px 1fr 64px;
+      gap: 10px;
+      padding: 10px 0;
+    }
+    .slider-row label { font-size: 12px; }
+    .slider-row label small { font-size: 10px; }
+    .slider-row .val { font-size: 12px; }
+    /* Bigger thumb for touch */
+    .slider-row input[type=range]::-webkit-slider-thumb {
+      width: 22px; height: 22px;
+      box-shadow: 0 0 0 3px rgba(0,217,255,0.18);
+    }
+    .slider-row input[type=range]::-moz-range-thumb {
+      width: 22px; height: 22px;
+      box-shadow: 0 0 0 3px rgba(0,217,255,0.18);
+    }
+
+    .preset-row { gap: 5px; margin-bottom: 12px; }
+    .preset-row button { padding: 5px 9px; font-size: 10px; }
+
+    .chart { height: 260px; }
+    .chart.tall { height: 340px; }
+
+    .legend-pill { font-size: 10px; padding: 2px 8px; }
+
+    .info { padding: 16px 14px; margin-top: 22px; }
+    .info td { padding: 6px 4px; font-size: 12px; }
+    .info td:first-child { width: 64px; font-size: 12px; }
+    .info td:nth-child(2) { width: auto; font-size: 11px; }
+    .info td:last-child { font-size: 11px; }
+
+    footer { padding: 16px; font-size: 11px; }
+  }
+
+  /* Very narrow phones (e.g. 320-360px width) */
+  @media (max-width: 380px) {
+    header h1 { font-size: 18px; }
+    .greeks-grid { grid-template-columns: 1fr; }
+    .chart { height: 240px; }
+    .slider-row { grid-template-columns: 44px 1fr 58px; gap: 8px; }
+  }
+
   .card {
     background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--r);
     padding: 18px 20px; box-shadow: var(--shadow);

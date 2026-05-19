@@ -4,10 +4,8 @@ An interactive, browser-based calculator for European options pricing under the 
 
 ## Live Demo
 
-Once you enable GitHub Pages on this repository (see [Hosting](#hosting) below), the live dashboard will be available at:
-
 ```
-https://<your-github-username>.github.io/bsm-calculator/
+[https://<your-github-username>.github.io/bsm-calculator](https://eeramos.github.io/bsm-calculator/)/
 ```
 
 ## What It Does

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Black-Scholes-Merton Interactive Calculator | Greeks Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+  :root {
+    --bg-0: #0a0e1a;
+    --bg-1: #11172a;
+    --bg-2: #1a2340;
+    --border: #2a3556;
+    --text: #e6edf7;
+    --text-dim: #8b96b3;
+    --accent: #00d9ff;
+    --call: #22d3a0;
+    --put:  #ff5e87;
+    --warn: #ffc857;
+    --shadow: 0 8px 32px rgba(0,0,0,0.45);
+    --r: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background: var(--bg-0); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", Segoe UI, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration:none; }
+
+  header {
+    padding: 32px 40px 12px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #0d1326 0%, var(--bg-0) 100%);
+  }
+  header h1 {
+    margin: 0 0 6px; font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #ffffff 0%, var(--accent) 80%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  header p { margin: 0; color: var(--text-dim); font-size: 14px; max-width: 900px; }
+  header .badge {
+    display:inline-block; margin-left: 10px; padding: 3px 10px; border-radius: 999px;
+    font-size: 10px; background: rgba(0,217,255,0.12); color: var(--accent);
+    border: 1px solid rgba(0,217,255,0.35);
+    letter-spacing: 0.14em; text-transform: uppercase; vertical-align: 6px; font-weight: 600;
+    -webkit-text-fill-color: var(--accent);
+    background-clip: border-box; -webkit-background-clip: border-box;
+  }
+  header .author {
+    margin-top: 8px; font-size: 12px; color: var(--text-dim); letter-spacing: 0.04em;
+  }
+  header .author strong { color: var(--text); font-weight: 600; }
+  .formula { padding: 10px 40px 20px; color: var(--text-dim); font-size: 13px;
+    border-bottom: 1px solid var(--border); background: var(--bg-1); }
+
+  main { padding: 28px 40px 80px; }
+  .grid { display: grid; gap: 20px; }
+  .grid.controls { grid-template-columns: 360px 1fr; }
+  .grid.charts-2 { grid-template-columns: 1fr 1fr; }
+  .grid.charts-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .grid.outputs  { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (max-width: 1100px) {
+    .grid.controls, .grid.charts-2, .grid.charts-3 { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--r);
+    padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .card h3 {
+    margin: 0 0 14px; font-size: 13px; font-weight: 600; color: var(--text-dim);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  .slider-row {
+    display: grid; grid-template-columns: 60px 1fr 80px; gap: 12px; align-items: center;
+    padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.05);
+  }
+  .slider-row:last-child { border-bottom: none; }
+  .slider-row label { font-size: 13px; color: var(--text); font-weight: 500; }
+  .slider-row label small { display:block; color: var(--text-dim); font-weight: 400; font-size: 11px; }
+  .slider-row input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--accent) var(--p,50%), var(--bg-2) var(--p,50%));
+    border-radius: 4px; outline: none;
+  }
+  .slider-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; cursor: pointer; box-shadow: 0 0 0 4px rgba(0,217,255,0.2);
+  }
+  .slider-row input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; background: #fff; cursor: pointer;
+    border: none; box-shadow: 0 0 0 4px rgba(0,217,255,0.2);
+  }
+  .slider-row .val {
+    font-family: "SF Mono", Menlo, monospace; font-size: 13px; color: var(--accent);
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .preset-row { display:flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .preset-row button {
+    background: var(--bg-2); color: var(--text); border: 1px solid var(--border);
+    padding: 4px 10px; font-size: 11px; border-radius: 999px; cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .preset-row button:hover { border-color: var(--accent); color: var(--accent); }
+
+  .output-card {
+    background: var(--bg-2); border-radius: 10px; padding: 14px 16px;
+    border-left: 3px solid var(--border); transition: border-color 0.15s;
+  }
+  .output-card.call { border-left-color: var(--call); }
+  .output-card.put  { border-left-color: var(--put); }
+  .output-card .lbl { font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em;
+    text-transform: uppercase; }
+  .output-card .num {
+    font-family: "SF Mono", Menlo, monospace; font-size: 22px; font-weight: 600;
+    margin-top: 4px; font-variant-numeric: tabular-nums;
+  }
+  .output-card .sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  .greeks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+  .greek {
+    background: var(--bg-2); padding: 8px 10px; border-radius: 8px;
+    display: flex; flex-direction: column; align-items: flex-start;
+  }
+  .greek .name { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em;
+    text-transform: uppercase; }
+  .greek .c { color: var(--call); font-family: "SF Mono", monospace; font-size: 13px;
+    font-variant-numeric: tabular-nums; }
+  .greek .p { color: var(--put); font-family: "SF Mono", monospace; font-size: 13px;
+    font-variant-numeric: tabular-nums; }
+  .greek-row { display: flex; gap: 10px; width:100%; justify-content: space-between; }
+
+  .chart { height: 320px; }
+  .chart.tall { height: 440px; }
+  .legend-pill {
+    display:inline-flex; align-items:center; gap: 6px; padding: 2px 10px;
+    border-radius: 999px; background: var(--bg-2); font-size: 11px; margin-right: 6px;
+  }
+  .legend-pill .dot { width: 8px; height: 8px; border-radius: 50%; display:inline-block; }
+  .legend-pill .dot.c { background: var(--call); }
+  .legend-pill .dot.p { background: var(--put); }
+
+  .info {
+    margin-top: 30px; padding: 22px 26px; background: var(--bg-1);
+    border-radius: var(--r); border: 1px solid var(--border);
+  }
+  .info h3 { margin-top: 0; color: var(--accent); font-size: 14px; letter-spacing: 0.06em; }
+  .info table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .info td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .info td:first-child { font-weight: 600; color: var(--warn); width: 90px; }
+  .info td:nth-child(2) { color: var(--text); width: 240px; font-family: "SF Mono", monospace; font-size: 12px; }
+  .info td:last-child { color: var(--text-dim); }
+
+  footer { text-align: center; padding: 20px; color: var(--text-dim); font-size: 12px;
+    border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Black-Scholes-Merton Calculator <span class="badge">Interactive</span></h1>
+  <p>European options pricing. Call, Put and the full set of first- and second-order Greeks.
+     Move the sliders and watch every chart update in real time.</p>
+  <div class="author">Built by <strong>Eduardo Ramos, CFA</strong></div>
+</header>
+
+<div class="formula">
+  $C = S e^{-q\tau} N(d_1) - K e^{-r\tau} N(d_2) \;\;\;\;
+     P = K e^{-r\tau} N(-d_2) - S e^{-q\tau} N(-d_1) \;\;\;\;
+     d_{1,2} = \dfrac{\ln(S/K) + (r - q \pm \tfrac{1}{2}\sigma^2)\tau}{\sigma \sqrt{\tau}}$
+</div>
+
+<main>
+
+  <!-- ====================  CONTROLS + OUTPUTS  ==================== -->
+  <div class="grid controls">
+
+    <!-- Inputs -->
+    <div class="card">
+      <h3>Market &amp; Contract Inputs</h3>
+      <div class="preset-row">
+        <button onclick="loadPreset('atm')">ATM</button>
+        <button onclick="loadPreset('itmCall')">Deep-ITM Call</button>
+        <button onclick="loadPreset('otmPut')">OTM Put</button>
+        <button onclick="loadPreset('shortExp')">Near Expiry</button>
+        <button onclick="loadPreset('highVol')">High Vol Regime</button>
+      </div>
+      <div id="sliders"></div>
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color: var(--text-dim);">
+          <span>$d_1 = $ <span id="d1Val" style="color:var(--accent); font-family:monospace;"></span></span>
+          <span>$d_2 = $ <span id="d2Val" style="color:var(--accent); font-family:monospace;"></span></span>
+        </div>
+        <div style="margin-top:6px; font-size:11px; color: var(--text-dim);">
+          Put-Call parity residual: <span id="pcpVal" style="color:var(--call); font-family:monospace;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outputs -->
+    <div class="card">
+      <h3>Live Pricing &amp; Greeks</h3>
+      <div class="grid outputs">
+        <div class="output-card call">
+          <div class="lbl">Call Price</div>
+          <div class="num" id="callPrice" style="color:var(--call);"></div>
+          <div class="sub">European, BSM with dividend</div>
+        </div>
+        <div class="output-card put">
+          <div class="lbl">Put Price</div>
+          <div class="num" id="putPrice" style="color:var(--put);"></div>
+          <div class="sub">European, BSM with dividend</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <div style="font-size:11px; color: var(--text-dim); letter-spacing: 0.08em;
+                    text-transform: uppercase; margin-bottom:6px;">Greeks</div>
+        <div class="greeks-grid" id="greeksGrid"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ====================  CHARTS  ==================== -->
+
+  <div class="grid charts-2" style="margin-top:24px;">
+    <div class="card">
+      <h3>Payoff at Expiry &nbsp;
+        <span class="legend-pill"><span class="dot c"></span>Call</span>
+        <span class="legend-pill"><span class="dot p"></span>Put</span>
+      </h3>
+      <div id="chartPayoff" class="chart"></div>
+    </div>
+    <div class="card">
+      <h3>Option Value vs Spot &nbsp;
+        <span class="legend-pill"><span class="dot c"></span>Call</span>
+        <span class="legend-pill"><span class="dot p"></span>Put</span>
+      </h3>
+      <div id="chartPrice" class="chart"></div>
+    </div>
+  </div>
+
+  <div class="grid charts-2" style="margin-top:20px;">
+    <div class="card">
+      <h3>Delta vs Spot</h3>
+      <div id="chartDelta" class="chart"></div>
+    </div>
+    <div class="card">
+      <h3>Gamma vs Spot (identical for Call &amp; Put)</h3>
+      <div id="chartGamma" class="chart"></div>
+    </div>
+  </div>
+
+  <div class="grid charts-2" style="margin-top:20px;">
+    <div class="card">
+      <h3>Vega vs Spot (identical for Call &amp; Put)</h3>
+      <div id="chartVega" class="chart"></div>
+    </div>
+    <div class="card">
+      <h3>Theta vs Spot (per year)</h3>
+      <div id="chartTheta" class="chart"></div>
+    </div>
+  </div>
+
+  <div class="grid charts-2" style="margin-top:20px;">
+    <div class="card">
+      <h3>Rho vs Spot</h3>
+      <div id="chartRho" class="chart"></div>
+    </div>
+    <div class="card">
+      <h3>Vanna vs Spot &nbsp; $\partial \Delta / \partial \sigma$</h3>
+      <div id="chartVanna" class="chart"></div>
+    </div>
+  </div>
+
+  <div class="grid charts-2" style="margin-top:20px;">
+    <div class="card">
+      <h3>Volga (Vomma) vs Spot &nbsp; $\partial \mathcal{V} / \partial \sigma$</h3>
+      <div id="chartVolga" class="chart"></div>
+    </div>
+    <div class="card">
+      <h3>Charm vs Spot &nbsp; $\partial \Delta / \partial \tau$</h3>
+      <div id="chartCharm" class="chart"></div>
+    </div>
+  </div>
+
+  <div class="grid charts-2" style="margin-top:20px;">
+    <div class="card">
+      <h3>Time Decay: Option Value vs Time to Maturity</h3>
+      <div id="chartTime" class="chart"></div>
+    </div>
+    <div class="card">
+      <h3>Volatility Sensitivity: Value vs $\sigma$</h3>
+      <div id="chartVol" class="chart"></div>
+    </div>
+  </div>
+
+  <div class="grid charts-2" style="margin-top:20px;">
+    <div class="card">
+      <h3>3D Surface: Call Price over (Spot, Volatility)</h3>
+      <div id="surfCall" class="chart tall"></div>
+    </div>
+    <div class="card">
+      <h3>3D Surface: Put Price over (Spot, Volatility)</h3>
+      <div id="surfPut" class="chart tall"></div>
+    </div>
+  </div>
+
+  <!-- ====================  GLOSSARY  ==================== -->
+  <div class="info">
+    <h3>Greeks: Risk Sensitivities</h3>
+    <table>
+      <tr><td>Delta</td><td>$\partial V / \partial S$</td>
+          <td>Rate of change of the option value w.r.t. the underlying. The hedge ratio.</td></tr>
+      <tr><td>Gamma</td><td>$\partial^2 V / \partial S^2$</td>
+          <td>Convexity of the option value. Peaks at-the-money and decays as expiry approaches for OTM/ITM.</td></tr>
+      <tr><td>Vega</td><td>$\partial V / \partial \sigma$</td>
+          <td>Sensitivity to volatility. Long options are long vega; positive for both calls and puts.</td></tr>
+      <tr><td>Theta</td><td>$\partial V / \partial t$</td>
+          <td>Time decay. Almost always negative for long options; quantifies the "rent" you pay for optionality.</td></tr>
+      <tr><td>Rho</td><td>$\partial V / \partial r$</td>
+          <td>Sensitivity to the risk-free rate. Matters most for long-dated options.</td></tr>
+      <tr><td>Vanna</td><td>$\partial^2 V / \partial S \partial \sigma$</td>
+          <td>Cross-sensitivity. Critical for delta hedging when vol is itself moving.</td></tr>
+      <tr><td>Volga</td><td>$\partial^2 V / \partial \sigma^2$</td>
+          <td>Convexity in volatility. Drives the cost of vol-of-vol exposure (vol smile/skew dynamics).</td></tr>
+      <tr><td>Charm</td><td>$\partial^2 V / \partial S \partial t$</td>
+          <td>Delta decay. Important for overnight gap risk on positions held into expiry.</td></tr>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  Built by <strong style="color: var(--text);">Eduardo Ramos, CFA</strong>.
+</footer>
+
+<!-- ============================  ENGINE  ============================ -->
+<script>
+"use strict";
+
+/* ------------ Standard normal ------------ */
+function normPdf(x){ return Math.exp(-0.5*x*x) / Math.sqrt(2*Math.PI); }
+function normCdf(x){
+  // Abramowitz & Stegun 26.2.17, ~6 decimal accuracy
+  const a1=0.319381530, a2=-0.356563782, a3=1.781477937, a4=-1.821255978, a5=1.330274429;
+  const sign = x >= 0 ? 1 : -1;
+  const z = Math.abs(x);
+  const k = 1 / (1 + 0.2316419 * z);
+  const n = normPdf(z);
+  let N = 1 - n * (a1*k + a2*Math.pow(k,2) + a3*Math.pow(k,3) + a4*Math.pow(k,4) + a5*Math.pow(k,5));
+  return sign > 0 ? N : 1 - N;
+}
+
+/* ------------ Full BSM with Greeks ------------ */
+function bsm(S, K, r, q, sigma, tau, type){
+  if (tau <= 0 || sigma <= 0 || S <= 0){
+    const intrinsic = type === 'call' ? Math.max(S-K,0) : Math.max(K-S,0);
+    return { price: intrinsic, delta: 0, gamma: 0, vega: 0, theta: 0, rho: 0, vanna: 0, volga: 0, charm: 0, d1:0, d2:0 };
+  }
+  const sst = sigma * Math.sqrt(tau);
+  const d1 = (Math.log(S/K) + (r - q + 0.5*sigma*sigma)*tau) / sst;
+  const d2 = d1 - sst;
+  const discR = Math.exp(-r*tau), discQ = Math.exp(-q*tau);
+  const Nd1 = normCdf(d1), Nd2 = normCdf(d2);
+  const Nmd1 = normCdf(-d1), Nmd2 = normCdf(-d2);
+  const nd1 = normPdf(d1);
+
+  let price, delta, theta, rho, charm;
+  if (type === 'call'){
+    price = S*discQ*Nd1 - K*discR*Nd2;
+    delta = discQ*Nd1;
+    theta = -S*discQ*nd1*sigma/(2*Math.sqrt(tau)) - r*K*discR*Nd2 + q*S*discQ*Nd1;
+    rho   = K*tau*discR*Nd2;
+    charm = -discQ * ( nd1*(2*(r-q)*tau - d2*sst)/(2*tau*sst) - q*Nd1 );
+  } else {
+    price = K*discR*Nmd2 - S*discQ*Nmd1;
+    delta = -discQ*Nmd1;
+    theta = -S*discQ*nd1*sigma/(2*Math.sqrt(tau)) + r*K*discR*Nmd2 - q*S*discQ*Nmd1;
+    rho   = -K*tau*discR*Nmd2;
+    charm = -discQ * ( nd1*(2*(r-q)*tau - d2*sst)/(2*tau*sst) + q*Nmd1 );
+  }
+  const gamma = discQ * nd1 / (S * sst);
+  const vega  = S * discQ * nd1 * Math.sqrt(tau);
+  const vanna = -discQ * nd1 * d2 / sigma;
+  const volga = vega * d1 * d2 / sigma;
+  return { price, delta, gamma, vega, theta, rho, vanna, volga, charm, d1, d2 };
+}
+
+/* ------------ Inputs ------------ */
+const sliderDefs = [
+  { id:'S',     label:'S',     sub:'Spot',         min:1,    max:300,  step:1,     val:100   },
+  { id:'K',     label:'K',     sub:'Strike',       min:1,    max:300,  step:1,     val:100   },
+  { id:'r',     label:'r',     sub:'Risk-free %',  min:-2,   max:15,   step:0.1,   val:5     },
+  { id:'q',     label:'q',     sub:'Div yield %',  min:0,    max:10,   step:0.1,   val:2     },
+  { id:'sigma', label:'σ',     sub:'Vol %',        min:1,    max:120,  step:0.5,   val:20    },
+  { id:'tau',   label:'τ',     sub:'Years',        min:0.01, max:5,    step:0.01,  val:1     },
+];
+const state = {};
+sliderDefs.forEach(s => state[s.id] = s.val);
+
+/* Build slider UI */
+const sliderHost = document.getElementById('sliders');
+sliderDefs.forEach(s => {
+  const wrap = document.createElement('div');
+  wrap.className = 'slider-row';
+  wrap.innerHTML = `
+    <label>${s.label}<small>${s.sub}</small></label>
+    <input type="range" id="rng-${s.id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.val}">
+    <div class="val" id="lbl-${s.id}"></div>
+  `;
+  sliderHost.appendChild(wrap);
+  const inp = wrap.querySelector(`#rng-${s.id}`);
+  const lbl = wrap.querySelector(`#lbl-${s.id}`);
+  const updFill = () => {
+    const p = ((inp.value - s.min) / (s.max - s.min)) * 100;
+    inp.style.setProperty('--p', p + '%');
+  };
+  const fmt = v => {
+    if (s.id === 'r' || s.id === 'q' || s.id === 'sigma') return Number(v).toFixed(2) + '%';
+    if (s.id === 'tau') return Number(v).toFixed(2) + 'y';
+    return Number(v).toFixed(0);
+  };
+  inp.addEventListener('input', e => {
+    state[s.id] = parseFloat(e.target.value);
+    lbl.textContent = fmt(e.target.value);
+    updFill();
+    render();
+  });
+  lbl.textContent = fmt(s.val);
+  updFill();
+});
+
+/* ------------ Output renderers ------------ */
+function getParams(){
+  return {
+    S: state.S, K: state.K,
+    r: state.r/100, q: state.q/100,
+    sigma: state.sigma/100, tau: state.tau
+  };
+}
+function fmt(x, d=4){ if(!isFinite(x)) return 'n/a'; return x.toFixed(d); }
+
+const greekKeys = ['delta','gamma','vega','theta','rho','vanna','volga','charm'];
+const greekScale = { delta:1, gamma:1, vega:1/100, theta:1/365, rho:1/100, vanna:1/100, volga:1/10000, charm:1/365 };
+const greekUnitNote = {
+  delta:'per $1 in S', gamma:'per $1²', vega:'per 1% vol', theta:'per day',
+  rho:'per 1% rate',   vanna:'per 1% vol', volga:'per (1% vol)²', charm:'per day'
+};
+
+function renderGreeks(c, p){
+  const host = document.getElementById('greeksGrid');
+  host.innerHTML = '';
+  greekKeys.forEach(g => {
+    const sc = greekScale[g];
+    const div = document.createElement('div');
+    div.className = 'greek';
+    div.innerHTML = `
+      <div class="name">${g} <span style="color:#555;">· ${greekUnitNote[g]}</span></div>
+      <div class="greek-row">
+        <span class="c">${fmt(c[g]*sc, 4)}</span>
+        <span class="p">${fmt(p[g]*sc, 4)}</span>
+      </div>
+    `;
+    host.appendChild(div);
+  });
+}
+
+/* ------------ Plotly base layout ------------ */
+const baseLayout = {
+  paper_bgcolor: 'rgba(0,0,0,0)',
+  plot_bgcolor:  'rgba(0,0,0,0)',
+  font: { color:'#8b96b3', family:'-apple-system, Inter, sans-serif', size:11 },
+  margin: { l:50, r:20, t:10, b:40 },
+  xaxis: { gridcolor:'#1f2a44', zerolinecolor:'#2a3556', linecolor:'#2a3556' },
+  yaxis: { gridcolor:'#1f2a44', zerolinecolor:'#2a3556', linecolor:'#2a3556' },
+  showlegend: false,
+  hovermode: 'x unified',
+  hoverlabel: { bgcolor:'#11172a', bordercolor:'#2a3556', font:{color:'#e6edf7'} },
+};
+const config = { displayModeBar:false, responsive:true };
+
+function range(min, max, n){
+  const arr = new Array(n);
+  const step = (max - min) / (n-1);
+  for (let i=0; i<n; i++) arr[i] = min + i*step;
+  return arr;
+}
+
+/* ------------ Charts ------------ */
+function render(){
+  const p = getParams();
+  const c = bsm(p.S, p.K, p.r, p.q, p.sigma, p.tau, 'call');
+  const pu = bsm(p.S, p.K, p.r, p.q, p.sigma, p.tau, 'put');
+
+  document.getElementById('callPrice').textContent = '$' + c.price.toFixed(4);
+  document.getElementById('putPrice').textContent  = '$' + pu.price.toFixed(4);
+  document.getElementById('d1Val').textContent = c.d1.toFixed(4);
+  document.getElementById('d2Val').textContent = c.d2.toFixed(4);
+  const pcp = (c.price - pu.price) - (p.S*Math.exp(-p.q*p.tau) - p.K*Math.exp(-p.r*p.tau));
+  document.getElementById('pcpVal').textContent = pcp.toExponential(2);
+
+  renderGreeks(c, pu);
+
+  /* Spot grid */
+  const Sgrid = range(Math.max(1, p.S*0.4), p.S*1.8, 80);
+
+  /* Payoff */
+  const payoffC = Sgrid.map(s => Math.max(s - p.K, 0));
+  const payoffP = Sgrid.map(s => Math.max(p.K - s, 0));
+  Plotly.react('chartPayoff', [
+    { x:Sgrid, y:payoffC, type:'scatter', mode:'lines', name:'Call', line:{color:'#22d3a0', width:2.5} },
+    { x:Sgrid, y:payoffP, type:'scatter', mode:'lines', name:'Put',  line:{color:'#ff5e87', width:2.5} },
+    { x:[p.S], y:[0], type:'scatter', mode:'markers', marker:{color:'#00d9ff', size:10, symbol:'diamond'}, name:'Spot' }
+  ], {...baseLayout,
+      xaxis:{...baseLayout.xaxis, title:'Spot at maturity'},
+      yaxis:{...baseLayout.yaxis, title:'Payoff'}}, config);
+
+  /* Pricing curves */
+  const valC = Sgrid.map(s => bsm(s,p.K,p.r,p.q,p.sigma,p.tau,'call').price);
+  const valP = Sgrid.map(s => bsm(s,p.K,p.r,p.q,p.sigma,p.tau,'put').price);
+  Plotly.react('chartPrice', [
+    { x:Sgrid, y:valC, type:'scatter', mode:'lines', line:{color:'#22d3a0', width:2.5}, name:'Call' },
+    { x:Sgrid, y:valP, type:'scatter', mode:'lines', line:{color:'#ff5e87', width:2.5}, name:'Put' },
+    { x:Sgrid, y:Sgrid.map(s => Math.max(s-p.K, 0)), type:'scatter', mode:'lines',
+      line:{color:'#22d3a0', width:1, dash:'dot'}, name:'C intrinsic', hoverinfo:'skip', opacity:0.5 },
+    { x:Sgrid, y:Sgrid.map(s => Math.max(p.K-s, 0)), type:'scatter', mode:'lines',
+      line:{color:'#ff5e87', width:1, dash:'dot'}, name:'P intrinsic', hoverinfo:'skip', opacity:0.5 },
+    { x:[p.S,p.S], y:[0, Math.max(...valC, ...valP)*1.05], type:'scatter', mode:'lines',
+      line:{color:'#00d9ff', width:1, dash:'dash'}, hoverinfo:'skip' }
+  ], {...baseLayout,
+      xaxis:{...baseLayout.xaxis, title:'Spot S'},
+      yaxis:{...baseLayout.yaxis, title:'Option value'}}, config);
+
+  /* Helper to plot Greek vs Spot */
+  function plotGreekVsSpot(id, key, scale=1, title=''){
+    const gC = Sgrid.map(s => bsm(s,p.K,p.r,p.q,p.sigma,p.tau,'call')[key]*scale);
+    const gP = Sgrid.map(s => bsm(s,p.K,p.r,p.q,p.sigma,p.tau,'put')[key]*scale);
+    Plotly.react(id, [
+      { x:Sgrid, y:gC, type:'scatter', mode:'lines', line:{color:'#22d3a0', width:2.5}, name:'Call' },
+      { x:Sgrid, y:gP, type:'scatter', mode:'lines', line:{color:'#ff5e87', width:2.5}, name:'Put' },
+      { x:[p.S], y:[bsm(p.S,p.K,p.r,p.q,p.sigma,p.tau,'call')[key]*scale],
+        type:'scatter', mode:'markers', marker:{color:'#22d3a0', size:9}, hoverinfo:'skip' },
+      { x:[p.S], y:[bsm(p.S,p.K,p.r,p.q,p.sigma,p.tau,'put')[key]*scale],
+        type:'scatter', mode:'markers', marker:{color:'#ff5e87', size:9}, hoverinfo:'skip' }
+    ], {...baseLayout,
+        xaxis:{...baseLayout.xaxis, title:'Spot S'},
+        yaxis:{...baseLayout.yaxis, title:title}}, config);
+  }
+  plotGreekVsSpot('chartDelta', 'delta', 1, 'Δ');
+  plotGreekVsSpot('chartGamma', 'gamma', 1, 'Γ');
+  plotGreekVsSpot('chartVega',  'vega',  1/100, 'V (per 1% vol)');
+  plotGreekVsSpot('chartTheta', 'theta', 1/365, 'Θ (per day)');
+  plotGreekVsSpot('chartRho',   'rho',   1/100, 'ρ (per 1% rate)');
+  plotGreekVsSpot('chartVanna', 'vanna', 1/100, 'Vanna');
+  plotGreekVsSpot('chartVolga', 'volga', 1/10000, 'Volga');
+  plotGreekVsSpot('chartCharm', 'charm', 1/365, 'Charm (per day)');
+
+  /* Value vs Time-to-Maturity */
+  const tauGrid = range(0.01, Math.max(p.tau*2, 2), 60);
+  const tvC = tauGrid.map(t => bsm(p.S,p.K,p.r,p.q,p.sigma,t,'call').price);
+  const tvP = tauGrid.map(t => bsm(p.S,p.K,p.r,p.q,p.sigma,t,'put').price);
+  Plotly.react('chartTime', [
+    { x:tauGrid, y:tvC, mode:'lines', line:{color:'#22d3a0', width:2.5}, name:'Call' },
+    { x:tauGrid, y:tvP, mode:'lines', line:{color:'#ff5e87', width:2.5}, name:'Put' },
+    { x:[p.tau,p.tau], y:[0, Math.max(...tvC,...tvP)*1.05], mode:'lines',
+      line:{color:'#00d9ff', width:1, dash:'dash'}, hoverinfo:'skip' }
+  ], {...baseLayout,
+      xaxis:{...baseLayout.xaxis, title:'Time to maturity τ (years)'},
+      yaxis:{...baseLayout.yaxis, title:'Option value'}}, config);
+
+  /* Value vs Vol */
+  const volGrid = range(0.01, 1.5, 80);
+  const vvC = volGrid.map(s => bsm(p.S,p.K,p.r,p.q,s,p.tau,'call').price);
+  const vvP = volGrid.map(s => bsm(p.S,p.K,p.r,p.q,s,p.tau,'put').price);
+  Plotly.react('chartVol', [
+    { x:volGrid.map(v=>v*100), y:vvC, mode:'lines', line:{color:'#22d3a0', width:2.5}, name:'Call' },
+    { x:volGrid.map(v=>v*100), y:vvP, mode:'lines', line:{color:'#ff5e87', width:2.5}, name:'Put' },
+    { x:[p.sigma*100,p.sigma*100], y:[0, Math.max(...vvC,...vvP)*1.05], mode:'lines',
+      line:{color:'#00d9ff', width:1, dash:'dash'}, hoverinfo:'skip' }
+  ], {...baseLayout,
+      xaxis:{...baseLayout.xaxis, title:'Volatility σ (%)'},
+      yaxis:{...baseLayout.yaxis, title:'Option value'}}, config);
+
+  /* 3D surfaces */
+  const Sgrid3D  = range(Math.max(1, p.S*0.5), p.S*1.6, 30);
+  const volGrid3D = range(0.05, 1.0, 30);
+  const Zcall = volGrid3D.map(s => Sgrid3D.map(spot => bsm(spot,p.K,p.r,p.q,s,p.tau,'call').price));
+  const Zput  = volGrid3D.map(s => Sgrid3D.map(spot => bsm(spot,p.K,p.r,p.q,s,p.tau,'put').price));
+  const surfaceLayout = {
+    paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+    font:{color:'#8b96b3', size:10},
+    margin:{l:0, r:0, t:0, b:0},
+    scene: {
+      xaxis:{title:'Spot', gridcolor:'#1f2a44', backgroundcolor:'rgba(0,0,0,0)', color:'#8b96b3'},
+      yaxis:{title:'σ (%)', gridcolor:'#1f2a44', backgroundcolor:'rgba(0,0,0,0)', color:'#8b96b3'},
+      zaxis:{title:'Price', gridcolor:'#1f2a44', backgroundcolor:'rgba(0,0,0,0)', color:'#8b96b3'},
+      camera:{eye:{x:1.6, y:-1.6, z:0.9}}
+    }
+  };
+  Plotly.react('surfCall', [{
+    type:'surface', x:Sgrid3D, y:volGrid3D.map(v=>v*100), z:Zcall,
+    colorscale:[[0,'#0d3c2d'],[0.5,'#13a575'],[1,'#22d3a0']], showscale:false,
+    contours:{z:{show:true, usecolormap:true, project:{z:true}}}
+  }], surfaceLayout, config);
+  Plotly.react('surfPut', [{
+    type:'surface', x:Sgrid3D, y:volGrid3D.map(v=>v*100), z:Zput,
+    colorscale:[[0,'#3d1024'],[0.5,'#b03568'],[1,'#ff5e87']], showscale:false,
+    contours:{z:{show:true, usecolormap:true, project:{z:true}}}
+  }], surfaceLayout, config);
+}
+
+/* ------------ Presets ------------ */
+function loadPreset(name){
+  const presets = {
+    atm:      { S:100, K:100, r:5, q:2, sigma:20, tau:1 },
+    itmCall:  { S:130, K:100, r:5, q:2, sigma:25, tau:0.5 },
+    otmPut:   { S:120, K:90,  r:5, q:1, sigma:30, tau:0.75 },
+    shortExp: { S:100, K:100, r:5, q:0, sigma:25, tau:0.08 },
+    highVol:  { S:100, K:100, r:5, q:0, sigma:80, tau:1 },
+  };
+  const cfg = presets[name]; if(!cfg) return;
+  Object.entries(cfg).forEach(([k,v]) => {
+    state[k] = v;
+    const inp = document.getElementById('rng-'+k);
+    inp.value = v;
+    inp.dispatchEvent(new Event('input'));
+  });
+}
+
+/* ------------ Initial render ------------ */
+render();
+</script>
+
+</body>
+</html>

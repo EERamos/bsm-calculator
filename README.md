@@ -2,8 +2,6 @@
 
 An interactive, browser-based calculator for European options pricing under the Black-Scholes-Merton model, with the full set of first- and second-order Greeks updating live as you move the inputs.
 
-No build step, no server, no Python kernel. Just one HTML file that opens in any browser.
-
 ## Live Demo
 
 Once you enable GitHub Pages on this repository (see [Hosting](#hosting) below), the live dashboard will be available at:

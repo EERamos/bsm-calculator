@@ -109,16 +109,6 @@ print(f"Gamma: {result.gamma:.4f}")
 
 All inputs broadcast under NumPy rules, so you can pass arrays for vectorized batch pricing.
 
-## Hosting
-
-To enable GitHub Pages and get a live URL for the dashboard:
-
-1. Go to the repository on GitHub.
-2. Click **Settings → Pages** in the sidebar.
-3. Under **Source**, select **Deploy from a branch**.
-4. Choose `main` branch, `/ (root)` folder, and click **Save**.
-5. Wait about a minute. Your URL will be `https://<your-username>.github.io/bsm-calculator/`.
-
 ## Tech Stack
 
 * **Dashboard**: pure HTML, vanilla JavaScript, Plotly.js (CDN), MathJax (CDN)

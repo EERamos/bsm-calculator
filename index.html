@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -126,7 +126,6 @@
     color: var(--tx-2);
     font-size: var(--t-sm);
     line-height: var(--lh-snug);
-    max-width: 56ch;
   }
   .header .byline {
     margin-top: var(--s-3);
@@ -200,7 +199,6 @@
     margin-top: var(--s-2);
     font-size: var(--t-sm);
     color: var(--tx-3);
-    max-width: 60ch;
   }
   .section-head .num {
     display: inline-block;
@@ -508,7 +506,6 @@
     font-size: var(--t-sm);
     color: var(--tx-3);
     line-height: var(--lh-snug);
-    max-width: 60ch;
   }
   .chart-legend {
     display: inline-flex;
@@ -620,7 +617,7 @@
     padding: var(--s-3) 0;
     border-bottom: 1px solid var(--border-1);
   }
-  details.glossary .row:last-child { border-bottom: none; }
+  /* keep border on every row so the 2-col grid stays visually balanced */
   details.glossary .row .name {
     font-weight: 600;
     color: var(--tx-1);
@@ -694,7 +691,7 @@
     <p class="byline">Built by <strong>Eduardo Ramos, CFA</strong></p>
   </div>
   <button class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch color theme">
-    <span id="themeLabel">Dark mode</span>
+    <span id="themeLabel">Light mode</span>
   </button>
 </header>
 
@@ -1253,12 +1250,14 @@ function render(){
   Plotly.react('surfCall', [{
     type:'surface', x:Sgrid3D, y:volGrid3D.map(v=>v*100), z:Zcall,
     colorscale:[[0,'#0e2a25'],[0.5,'#3a8870'],[1,COLORS.call]],
-    showscale:false, contours:{z:{show:true, usecolormap:true, project:{z:true}}}
+    showscale:false, contours:{z:{show:true, usecolormap:true, project:{z:true}}},
+    hovertemplate:'<b>Call</b><br>Spot %{x:.2f}<br>Vol %{y:.2f}%<br>Price %{z:.4f}<extra></extra>'
   }], surfaceLayout, config);
   Plotly.react('surfPut', [{
     type:'surface', x:Sgrid3D, y:volGrid3D.map(v=>v*100), z:Zput,
     colorscale:[[0,'#2e1820'],[0.5,'#9a4858'],[1,COLORS.put]],
-    showscale:false, contours:{z:{show:true, usecolormap:true, project:{z:true}}}
+    showscale:false, contours:{z:{show:true, usecolormap:true, project:{z:true}}},
+    hovertemplate:'<b>Put</b><br>Spot %{x:.2f}<br>Vol %{y:.2f}%<br>Price %{z:.4f}<extra></extra>'
   }], surfaceLayout, config);
 }
 

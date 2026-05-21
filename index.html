@@ -158,16 +158,17 @@
      INTRO — explainer narrative, sets reader expectation
      ===================================================================== */
   .intro {
-    padding: var(--s-7) var(--s-5);
+    padding-block: var(--s-7);
+    padding-inline: max(var(--s-5), calc((100% - 1240px) / 2));
     border-bottom: 1px solid var(--border-1);
     background: var(--bg-raised);
   }
   .intro p {
-    margin: 0 auto;
-    max-width: 65ch;
+    margin: 0;
     color: var(--tx-2);
     font-size: var(--t-md);
     line-height: var(--lh-loose);
+    max-width: 95ch;
   }
   .intro p + p { margin-top: var(--s-4); }
   .intro .pull { color: var(--tx-1); font-weight: 500; }
@@ -220,9 +221,11 @@
   /* Asymmetric chart rows — visual rhythm, not 1fr/1fr monotony */
   .chart-row.asym-a { grid-template-columns: 1fr; }
   .chart-row.asym-b { grid-template-columns: 1fr; }
+  .chart-row.three  { grid-template-columns: 1fr; }
   @media (min-width: 720px) {
     .chart-row.asym-a { grid-template-columns: 1.6fr 1fr; }
     .chart-row.asym-b { grid-template-columns: 1fr 1.6fr; }
+    .chart-row.three  { grid-template-columns: repeat(3, 1fr); }
   }
 
   /* Editorial input zone — sliders compact, prices as display type */
@@ -796,25 +799,66 @@
     </div>
   </section>
 
-  <!-- ====== SECTION 04 — SECONDARY GREEKS (progressive disclosure) ====== -->
+  <!-- ====== SECTION 04 — VEGA, THETA, RHO (hero-level first-order Greeks) ====== -->
   <section class="section">
     <div class="section-head">
       <span class="num">04</span>
-      <h2>Six more Greeks, on demand</h2>
-      <p class="desc">Vega, Theta, Rho plus the cross-derivatives Vanna, Volga, Charm. Hidden behind a click so the main story stays visible. Open them when you want the full picture.</p>
+      <h2>Vega, Theta, Rho</h2>
+      <p class="desc">The three other first-order sensitivities. Vega is exposure to volatility, Theta is time decay, Rho is sensitivity to the risk-free rate. Together with Delta they cover the linear part of the BSM gradient.</p>
+    </div>
+    <div class="chart-row three">
+      <div class="chart-card">
+        <h3 class="title">Vega vs spot
+          <span class="chart-legend">
+            <span class="pill call">Call</span>
+            <span class="pill put">Put</span>
+          </span>
+        </h3>
+        <p class="annot">Identical for Call and Put. Peaks ATM where the option carries the most optionality. Per 1% move in σ.</p>
+        <div id="chartVega" class="chart"></div>
+      </div>
+      <div class="chart-card">
+        <h3 class="title">Theta vs spot
+          <span class="chart-legend">
+            <span class="pill call">Call</span>
+            <span class="pill put">Put</span>
+          </span>
+        </h3>
+        <p class="annot">The rent you pay for optionality. Negative for long options, most aggressive when the option is ATM and close to expiry. Per calendar day.</p>
+        <div id="chartTheta" class="chart"></div>
+      </div>
+      <div class="chart-card">
+        <h3 class="title">Rho vs spot
+          <span class="chart-legend">
+            <span class="pill call">Call</span>
+            <span class="pill put">Put</span>
+          </span>
+        </h3>
+        <p class="annot">Sensitivity to the risk-free rate. Positive for Calls, negative for Puts. Becomes material on long-dated options. Per 1% move in r.</p>
+        <div id="chartRho" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== SECTION 05 — CROSS-DERIVATIVES (progressive disclosure) ====== -->
+  <section class="section">
+    <div class="section-head">
+      <span class="num">05</span>
+      <h2>Cross-derivatives, on demand</h2>
+      <p class="desc">Vanna, Volga, Charm. The second-order Greeks that govern how the first-order ones move when more than one input changes. Hidden behind a click so the main narrative stays clean.</p>
     </div>
     <details class="disclose">
-      <summary>Reveal the secondary Greeks</summary>
+      <summary>Reveal Vanna, Volga, Charm</summary>
       <div class="body">
         <div class="sparks" id="sparks"></div>
       </div>
     </details>
   </section>
 
-  <!-- ====== SECTION 05 — TIME AND VOLATILITY (asymmetric: vol dominates) ====== -->
+  <!-- ====== SECTION 06 — TIME AND VOLATILITY (asymmetric: vol dominates) ====== -->
   <section class="section">
     <div class="section-head">
-      <span class="num">05</span>
+      <span class="num">06</span>
       <h2>Time and volatility</h2>
       <p class="desc">How the value depends on inputs other than spot. Dashed vertical lines mark the current τ and σ.</p>
     </div>
@@ -832,10 +876,10 @@
     </div>
   </section>
 
-  <!-- ====== SECTION 06 — 3D SURFACES ====== -->
+  <!-- ====== SECTION 07 — 3D SURFACES ====== -->
   <section class="section">
     <div class="section-head">
-      <span class="num">06</span>
+      <span class="num">07</span>
       <h2>Price as a surface over spot and volatility</h2>
       <p class="desc">Two slices of the same hypersurface. Hold τ, r, q fixed; vary spot and vol; get a 2D manifold of prices. One finger to rotate on touch, two fingers to zoom.</p>
     </div>
@@ -936,14 +980,29 @@ function toggleTheme(){
   render();
 }
 
+/* ---------- Resolve any CSS color (including oklch) to rgb string ---------- */
+/* Plotly does not parse oklch() — we resolve it via the browser by reading
+   the computed `color` on a temporary span. */
+const _resolver = document.createElement('span');
+_resolver.style.display = 'none';
+document.body.appendChild(_resolver);
+function resolveColor(cssColor){
+  _resolver.style.color = '';
+  _resolver.style.color = cssColor;
+  return getComputedStyle(_resolver).color || cssColor;
+}
+
 /* ---------- Read CSS tokens at runtime ---------- */
 function readColors(){
   const css = getComputedStyle(document.documentElement);
-  const grab = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
+  const grab = (name, fallback) => {
+    const raw = css.getPropertyValue(name).trim() || fallback;
+    return resolveColor(raw);
+  };
   return {
-    call:    grab('--call',    'oklch(74% 0.13 155)'),
-    put:     grab('--put',     'oklch(70% 0.16 25)'),
-    accent:  grab('--accent',  'oklch(78% 0.14 80)'),
+    call:    grab('--call',    '#2dd4a7'),
+    put:     grab('--put',     '#ff6d92'),
+    accent:  grab('--accent',  '#f0b400'),
     tx2:     grab('--tx-2',    '#a8b3d0'),
     tx3:     grab('--tx-3',    '#7884a8'),
     border1: grab('--border-1','#232d4d'),
@@ -999,9 +1058,6 @@ sliderDefs.forEach(s => {
 
 /* ---------- Sparkline cards (the 6 secondary Greeks) ---------- */
 const sparkDefs = [
-  { id:'spVega',  key:'vega',  scale:1/100,   name:'Vega',  unit:'per 1% vol'  },
-  { id:'spTheta', key:'theta', scale:1/365,   name:'Theta', unit:'per day'     },
-  { id:'spRho',   key:'rho',   scale:1/100,   name:'Rho',   unit:'per 1% rate' },
   { id:'spVanna', key:'vanna', scale:1/100,   name:'Vanna', unit:'per 1% vol'  },
   { id:'spVolga', key:'volga', scale:1/10000, name:'Volga', unit:'per (1% vol)²' },
   { id:'spCharm', key:'charm', scale:1/365,   name:'Charm', unit:'per day'     },
@@ -1130,6 +1186,9 @@ function render(){
   }
   plotGreekHero('chartDelta', 'delta', 1, 'Δ');
   plotGreekHero('chartGamma', 'gamma', 1, 'Γ');
+  plotGreekHero('chartVega',  'vega',  1/100,  'V (per 1% vol)');
+  plotGreekHero('chartTheta', 'theta', 1/365,  'Θ (per day)');
+  plotGreekHero('chartRho',   'rho',   1/100,  'ρ (per 1% rate)');
 
   /* ---- Sparklines: vega, theta, rho, vanna, volga, charm ---- */
   sparkDefs.forEach(s => {

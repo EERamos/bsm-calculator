@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -104,31 +104,34 @@
      HEADER — narrative entry, theme toggle, byline
      ===================================================================== */
   .header {
-    padding: var(--s-7) var(--s-5) var(--s-5);
+    padding: var(--s-6) var(--s-5) var(--s-5);
     border-bottom: 1px solid var(--border-1);
     display: grid;
     grid-template-columns: 1fr auto;
     gap: var(--s-4);
     align-items: start;
+    max-width: 1280px;
+    margin: 0 auto;
   }
   .header h1 {
-    margin: 0 0 var(--s-3);
-    font-size: var(--t-xl);
+    margin: 0 0 var(--s-2);
+    font-size: var(--t-lg);
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     line-height: var(--lh-tight);
     color: var(--tx-1);
+    max-width: 22ch;
   }
   .header .lede {
     margin: 0;
     color: var(--tx-2);
-    font-size: var(--t-base);
-    line-height: var(--lh-norm);
-    max-width: 60ch;
+    font-size: var(--t-sm);
+    line-height: var(--lh-snug);
+    max-width: 56ch;
   }
   .header .byline {
-    margin-top: var(--s-4);
-    font-size: var(--t-sm);
+    margin-top: var(--s-3);
+    font-size: var(--t-xs);
     color: var(--tx-3);
   }
   .header .byline strong { color: var(--tx-1); font-weight: 600; }
@@ -507,6 +510,31 @@
     line-height: var(--lh-snug);
     max-width: 60ch;
   }
+  .chart-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-3);
+    margin-left: var(--s-3);
+    vertical-align: middle;
+    font-size: var(--t-xs);
+    color: var(--tx-3);
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+  .chart-legend .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chart-legend .pill::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .chart-legend .pill.call::before { background: var(--call); }
+  .chart-legend .pill.put::before  { background: var(--put); }
   .chart      { height: 280px; touch-action: pan-y; }
   .chart.tall { height: 360px; touch-action: none; }
   .chart.spark { height: 110px; touch-action: pan-y; }
@@ -627,12 +655,12 @@
      RESPONSIVE — scale UP from mobile (base = phone)
      ===================================================================== */
   @media (min-width: 720px) {
-    .header { padding: var(--s-8) var(--s-7) var(--s-6); }
-    .header h1 { font-size: var(--t-2xl); }
-    .header .lede { font-size: var(--t-md); }
+    .header { padding: var(--s-7) var(--s-7) var(--s-5); }
+    .header h1 { font-size: var(--t-xl); max-width: none; }
+    .header .lede { font-size: var(--t-base); }
 
-    .intro { padding: var(--s-8) var(--s-7); }
-    .intro p { font-size: var(--t-lg); line-height: var(--lh-loose); }
+    .intro { padding: var(--s-7) var(--s-7); }
+    .intro p { font-size: var(--t-md); line-height: var(--lh-loose); }
 
     main { padding: var(--s-8) var(--s-7) var(--s-10); }
 
@@ -652,8 +680,8 @@
   }
 
   @media (min-width: 1100px) {
-    .header h1 { font-size: var(--t-3xl); }
-    .header .lede { font-size: var(--t-lg); }
+    .header h1 { font-size: var(--t-2xl); }
+    .header .lede { font-size: var(--t-md); }
     .sparks { grid-template-columns: repeat(6, 1fr); }
   }
 </style>
@@ -667,7 +695,7 @@
     <p class="byline">Built by <strong>Eduardo Ramos, CFA</strong></p>
   </div>
   <button class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch color theme">
-    <span id="themeLabel">Light mode</span>
+    <span id="themeLabel">Dark mode</span>
   </button>
 </header>
 
@@ -746,13 +774,23 @@
     </div>
     <div class="chart-row">
       <div class="chart-card">
-        <h3 class="title">Delta vs spot</h3>
-        <p class="annot">Call delta sweeps from 0 to e<sup>−qτ</sup> as the option crosses from deep OTM to deep ITM. Put delta is its symmetric counterpart, bounded between −e<sup>−qτ</sup> and 0.</p>
+        <h3 class="title">Delta vs spot
+          <span class="chart-legend">
+            <span class="pill call">Call</span>
+            <span class="pill put">Put</span>
+          </span>
+        </h3>
+        <p class="annot">Call delta sweeps from 0 to e<sup>−qτ</sup> as the option crosses from deep OTM to deep ITM. Put delta is its symmetric counterpart, bounded between −e<sup>−qτ</sup> and 0. The two dots mark the current spot: top dot is the Call delta right now, bottom dot is the Put.</p>
         <div id="chartDelta" class="chart"></div>
       </div>
       <div class="chart-card">
-        <h3 class="title">Gamma vs spot</h3>
-        <p class="annot">Gamma peaks at the money and tightens as expiry approaches. Identical for call and put. This is why short-gamma books bleed on Friday afternoons.</p>
+        <h3 class="title">Gamma vs spot
+          <span class="chart-legend">
+            <span class="pill call">Call</span>
+            <span class="pill put">Put</span>
+          </span>
+        </h3>
+        <p class="annot">Gamma peaks at the money and tightens as expiry approaches. Identical for Call and Put, so the two dots sit on top of each other. This is why short-gamma books bleed on Friday afternoons.</p>
         <div id="chartGamma" class="chart"></div>
       </div>
     </div>
@@ -1015,7 +1053,8 @@ function sparkLayout(){
     xaxis:  { visible:false, fixedrange:true },
     yaxis:  { visible:false, fixedrange:true },
     showlegend:false,
-    hovermode:false,
+    hovermode:'x unified',
+    hoverlabel: { bgcolor: COLORS.bgRaised, bordercolor: COLORS.border2, font:{color:COLORS.tx1, size:11} },
     dragmode:false,
   };
 }
@@ -1081,10 +1120,12 @@ function render(){
     const cVal = bsm(p.S,p.K,p.r,p.q,p.sigma,p.tau,'call')[key]*scale;
     const pVal = bsm(p.S,p.K,p.r,p.q,p.sigma,p.tau,'put')[key]*scale;
     Plotly.react(id, [
-      { x:Sgrid, y:gC, mode:'lines', line:{color:COLORS.call, width:2.5}, name:'Call' },
-      { x:Sgrid, y:gP, mode:'lines', line:{color:COLORS.put,  width:2.5}, name:'Put' },
-      { x:[p.S], y:[cVal], mode:'markers', marker:{color:COLORS.call, size:9}, hoverinfo:'skip' },
-      { x:[p.S], y:[pVal], mode:'markers', marker:{color:COLORS.put,  size:9}, hoverinfo:'skip' }
+      { x:Sgrid, y:gC, mode:'lines', name:'Call', line:{color:COLORS.call, width:2.5}, hovertemplate:'<b>Call</b> %{y:.4f}<extra></extra>' },
+      { x:Sgrid, y:gP, mode:'lines', name:'Put',  line:{color:COLORS.put,  width:2.5}, hovertemplate:'<b>Put</b> %{y:.4f}<extra></extra>' },
+      { x:[p.S], y:[cVal], mode:'markers', marker:{color:COLORS.call, size:10, line:{color:COLORS.bgRaised, width:2}}, name:'Call at current spot',
+        hovertemplate:'<b>Call</b> at S=%{x:.2f}<br>'+key+' = %{y:.4f}<extra></extra>' },
+      { x:[p.S], y:[pVal], mode:'markers', marker:{color:COLORS.put,  size:10, line:{color:COLORS.bgRaised, width:2}}, name:'Put at current spot',
+        hovertemplate:'<b>Put</b> at S=%{x:.2f}<br>'+key+' = %{y:.4f}<extra></extra>' }
     ], baseLayout({ xaxis:{title:'Spot S'}, yaxis:{title:yTitle} }), config);
   }
   plotGreekHero('chartDelta', 'delta', 1, 'Δ');
@@ -1097,8 +1138,8 @@ function render(){
     const cV = bsm(p.S,p.K,p.r,p.q,p.sigma,p.tau,'call')[s.key]*s.scale;
     const pV = bsm(p.S,p.K,p.r,p.q,p.sigma,p.tau,'put')[s.key]*s.scale;
     Plotly.react(s.id, [
-      { x:Sgrid, y:gC, mode:'lines', line:{color:COLORS.call, width:2} },
-      { x:Sgrid, y:gP, mode:'lines', line:{color:COLORS.put,  width:2} },
+      { x:Sgrid, y:gC, mode:'lines', name:'Call', line:{color:COLORS.call, width:2}, hovertemplate:'<b>Call</b> %{y:.4f}<extra></extra>' },
+      { x:Sgrid, y:gP, mode:'lines', name:'Put',  line:{color:COLORS.put,  width:2}, hovertemplate:'<b>Put</b> %{y:.4f}<extra></extra>' },
       { x:[p.S], y:[cV], mode:'markers', marker:{color:COLORS.call, size:6}, hoverinfo:'skip' },
       { x:[p.S], y:[pV], mode:'markers', marker:{color:COLORS.put,  size:6}, hoverinfo:'skip' }
     ], sparkLayout(), config);

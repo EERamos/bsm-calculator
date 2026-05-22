@@ -79,6 +79,33 @@ def _d1_d2(S, K, r, q, sigma, tau):
     return d1, d2, sigma_sqrt_tau
 
 
+def _degenerate_result(S, K, r, q, tau, option):
+    """
+    Closed-form limits when the BSM formula is undefined.
+
+    * tau -> 0:   price collapses to intrinsic; delta collapses to a Heaviside
+                  step (1 if ITM, 0 if OTM, 0.5 ATM); higher-order Greeks are
+                  either zero or unbounded (we return 0 by convention).
+    * sigma -> 0: option becomes a deterministic forward, price is the
+                  discounted intrinsic of the forward.
+    """
+    S, K, r, q, tau = (np.asarray(x, dtype=float) for x in (S, K, r, q, tau))
+    disc_r = np.exp(-r * tau)
+    disc_q = np.exp(-q * tau)
+    fwd = S * disc_q - K * disc_r  # discounted intrinsic for sigma=0
+
+    if option == "call":
+        price = np.maximum(fwd, 0.0)
+        delta = disc_q * np.where(S > K, 1.0, np.where(S < K, 0.0, 0.5))
+    else:
+        price = np.maximum(-fwd, 0.0)
+        delta = -disc_q * np.where(S < K, 1.0, np.where(S > K, 0.0, 0.5))
+
+    zero = np.zeros_like(price)
+    return BSMResult(price=price, delta=delta, gamma=zero, vega=zero,
+                     theta=zero, rho=zero, vanna=zero, volga=zero, charm=zero)
+
+
 def black_scholes(
     S: float | np.ndarray,
     K: float | np.ndarray,
@@ -95,9 +122,21 @@ def black_scholes(
     - vega per 1.00 in vol (divide by 100 for per-1% units)
     - theta per year (divide by 365 for per-day)
     - rho per 1.00 in rate (divide by 100 for per-1% units)
+
+    Degenerate inputs (tau <= 0 or sigma <= 0) are handled with their
+    closed-form limits. S must be strictly positive.
     """
     S, K, r, q, sigma, tau = map(np.asarray,
                                   (S, K, r, q, sigma, tau))
+
+    if np.any(S <= 0) or np.any(K <= 0):
+        raise ValueError("S and K must be strictly positive")
+    if option not in ("call", "put"):
+        raise ValueError("option must be 'call' or 'put'")
+
+    if np.any(np.asarray(tau) <= 0) or np.any(np.asarray(sigma) <= 0):
+        return _degenerate_result(S, K, r, q, tau, option)
+
     d1, d2, sst = _d1_d2(S, K, r, q, sigma, tau)
     Nd1, Nd2 = norm.cdf(d1), norm.cdf(d2)
     nd1 = norm.pdf(d1)
@@ -112,7 +151,7 @@ def black_scholes(
         rho = K * tau * disc_r * Nd2
         charm = (-disc_q * (nd1 * (2 * (r - q) * tau - d2 * sst)
                             / (2 * tau * sst) - q * Nd1))
-    elif option == "put":
+    else:  # put (validated above)
         price = K * disc_r * norm.cdf(-d2) - S * disc_q * norm.cdf(-d1)
         delta = -disc_q * norm.cdf(-d1)
         theta = (-S * disc_q * nd1 * sigma / (2 * np.sqrt(tau))
@@ -120,8 +159,6 @@ def black_scholes(
         rho = -K * tau * disc_r * norm.cdf(-d2)
         charm = (-disc_q * (nd1 * (2 * (r - q) * tau - d2 * sst)
                             / (2 * tau * sst) + q * norm.cdf(-d1)))
-    else:
-        raise ValueError("option must be 'call' or 'put'")
 
     # Greeks identical for call & put
     gamma = disc_q * nd1 / (S * sst)

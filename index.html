@@ -934,9 +934,33 @@ function normCdf(x){
 
 /* ---------- Full BSM with Greeks ---------- */
 function bsm(S, K, r, q, sigma, tau, type){
+  /* Closed-form limits when the formula is undefined.
+     - tau <= 0:  price = intrinsic; delta = Heaviside (1 ITM, 0 OTM, 0.5 ATM).
+     - sigma <= 0: price = discounted intrinsic of the forward.
+     Higher-order Greeks are 0 or unbounded; return 0 by convention. */
   if (tau <= 0 || sigma <= 0 || S <= 0){
-    const intrinsic = type === 'call' ? Math.max(S-K,0) : Math.max(K-S,0);
-    return { price: intrinsic, delta:0, gamma:0, vega:0, theta:0, rho:0, vanna:0, volga:0, charm:0, d1:0, d2:0 };
+    const discR = Math.exp(-r*Math.max(tau,0));
+    const discQ = Math.exp(-q*Math.max(tau,0));
+    let price, delta;
+    if (tau <= 0){
+      if (type === 'call'){
+        price = Math.max(S-K, 0);
+        delta = S > K ? 1 : (S < K ? 0 : 0.5);
+      } else {
+        price = Math.max(K-S, 0);
+        delta = S < K ? -1 : (S > K ? 0 : -0.5);
+      }
+    } else { // sigma <= 0
+      const fwd = S*discQ - K*discR;
+      if (type === 'call'){
+        price = Math.max(fwd, 0);
+        delta = fwd > 0 ? discQ : (fwd < 0 ? 0 : 0.5*discQ);
+      } else {
+        price = Math.max(-fwd, 0);
+        delta = fwd < 0 ? -discQ : (fwd > 0 ? 0 : -0.5*discQ);
+      }
+    }
+    return { price, delta, gamma:0, vega:0, theta:0, rho:0, vanna:0, volga:0, charm:0, d1:0, d2:0 };
   }
   const sst = sigma * Math.sqrt(tau);
   const d1 = (Math.log(S/K) + (r - q + 0.5*sigma*sigma)*tau) / sst;

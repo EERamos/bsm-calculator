@@ -23,7 +23,7 @@ Six sliders control the market and contract inputs (spot, strike, risk-free rate
 | Rho   | ρ | Sensitivity to interest rate |
 | Vanna | ∂Δ/∂σ | Cross-sensitivity, spot and vol |
 | Volga | ∂V/∂σ | Convexity in volatility |
-| Charm | ∂Δ/∂τ | Delta decay |
+| Charm | ∂Δ/∂t | Delta decay (calendar time, t = T − τ) |
 
 ### Visualizations
 
@@ -62,7 +62,12 @@ The pricing engine has been cross-validated against:
 * `scipy.stats.norm.cdf` in Python
 * Finite-difference numerical Greeks
 
-Across 9 test scenarios (ATM, deep ITM/OTM, near-expiry, long-dated, high-vol, negative rates, with and without dividend), the dashboard matches Hull and scipy to within the inherent error of the CDF approximation (~1e-5 absolute on price). Put-call parity holds to machine precision (~1e-15) in every case.
+There are two implementations and they have different precision floors:
+
+* The **Python module** uses `scipy.stats.norm.cdf` (IEEE-754 double precision), so prices match Hull and scipy to machine precision in every test case.
+* The **browser dashboard** uses the Abramowitz & Stegun rational approximation for the CDF, which carries a maximum absolute error of ~7.5e-8 in N(·). This translates to ~1e-5 absolute error on price for typical inputs.
+
+Across 9 test scenarios (ATM, deep ITM/OTM, near-expiry, long-dated, high-vol, negative rates, with and without dividend), both implementations agree with Hull within their respective precision floors. Put-call parity holds to machine precision (~1e-15) in every case.
 
 ## Files
 
